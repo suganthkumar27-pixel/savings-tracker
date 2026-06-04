@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>₹30,000 Savings Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #161918;
+    --surface2: #1d2120;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --teal: #2dd4a0;
+    --teal-dim: #1a8064;
+    --teal-bg: rgba(45,212,160,0.08);
+    --teal-bg2: rgba(45,212,160,0.15);
+    --amber: #f5a623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --text: #e8ede9;
+    --text2: #8a9690;
+    --text3: #4d5652;
+    --red: #f56060;
+    --red-bg: rgba(245,96,96,0.1);
+    --radius: 12px;
+    --radius-sm: 7px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(45,212,160,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 80% 90%, rgba(45,212,160,0.03) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 36px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .header-title span {
+    color: var(--teal);
+    font-style: italic;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-sub .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
+
+  /* Metrics grid */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .metric:hover { border-color: var(--border2); }
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .metric-value.teal { color: var(--teal); }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Progress bar */
+  .progress-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s 0.15s ease both;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .progress-header-label {
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .progress-header-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--teal);
+  }
+  .progress-track {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--teal);
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .phase-markers {
+    display: flex;
+    gap: 0;
+    margin-top: 8px;
+  }
+  .phase-marker {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    position: relative;
+    padding-top: 4px;
+  }
+  .phase-marker::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 1px;
+    height: 6px;
+    background: var(--border2);
+    transform: translateX(-50%);
+  }
+  .phase-marker:first-child::before { left: 0; }
+  .phase-marker:last-child::before { left: 100%; }
+
+  /* Status badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: var(--teal-bg); color: var(--teal); border: 1px solid rgba(45,212,160,0.2); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+  .badge-red { background: var(--red-bg); color: var(--red); border: 1px solid rgba(245,96,96,0.2); }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* Phase tabs */
+  .phase-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.2s ease both;
+    flex-wrap: wrap;
+  }
+  .phase-tab {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+  }
+  .phase-tab:hover { border-color: var(--border2); color: var(--text); }
+  .phase-tab.active { background: var(--teal-bg); border-color: rgba(45,212,160,0.3); color: var(--teal); }
+
+  /* Day list */
+  .day-list-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.5s 0.25s ease both;
+  }
+  .day-list-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .day-list-title {
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .day-list-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+  }
+  .day-list-scroll::-webkit-scrollbar { width: 4px; }
+  .day-list-scroll::-webkit-scrollbar-track { background: transparent; }
+  .day-list-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  .phase-section-header {
+    padding: 10px 20px 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
+  .phase-section-header span { color: var(--teal); }
+
+  .day-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+    position: relative;
+  }
+  .day-row:last-child { border-bottom: none; }
+  .day-row:hover { background: var(--surface2); }
+  .day-row.is-saved { background: var(--teal-bg); }
+  .day-row.is-saved:hover { background: var(--teal-bg2); }
+  .day-row.is-today { box-shadow: inset 2px 0 0 var(--teal); }
+  .day-row.is-future { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  .day-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    transition: all 0.15s;
+  }
+  .is-saved .day-check {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #0d0f0e;
+    font-weight: 600;
+  }
+
+  .day-info { flex: 1; min-width: 0; }
+  .day-date {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .day-num-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+  .is-today .day-date::after {
+    content: ' · today';
+    color: var(--teal);
+    font-size: 11px;
+    font-weight: 400;
+  }
+  .day-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+  .is-saved .day-amount { color: var(--teal); }
+  .day-cumulative {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+    width: 70px;
+    text-align: right;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+  .footer-tip {
+    font-size: 12px;
+    color: var(--text3);
+    max-width: 340px;
+    line-height: 1.6;
+  }
+  .reset-btn {
+    font-size: 12px;
+    color: var(--text3);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { color: var(--red); border-color: rgba(245,96,96,0.3); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .day-cumulative { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-eyebrow">Jun 3 → Dec 20, 2026</div>
+    <h1 class="header-title">Save <span>₹30,000</span><br>the easy way</h1>
+    <div class="header-sub">
+      <span>Small to big</span>
+      <span class="dot"></span>
+      <span>200 days</span>
+      <span class="dot"></span>
+      <span id="headerBadge" class="badge badge-green"><span class="badge-dot"></span> On track</span>
+    </div>
+  </div>
+
+  <div class="metrics" id="metricsGrid">
+    <div class="metric">
+      <div class="metric-label">Saved so far</div>
+      <div class="metric-value teal" id="mSaved">₹0</div>
+      <div class="metric-sub" id="mSavedSub">0 days logged</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Remaining</div>
+      <div class="metric-value" id="mRemain">₹30,000</div>
+      <div class="metric-sub" id="mRemainSub">200 days left</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Today's save</div>
+      <div class="metric-value" id="mToday">—</div>
+      <div class="metric-sub" id="mTodaySub">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Current streak</div>
+      <div class="metric-value" id="mStreak">0</div>
+      <div class="metric-sub">days in a row</div>
+    </div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-header-label">Overall progress</span>
+      <span class="progress-header-val" id="progLabel">0 / ₹30,000</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progFill" style="width:0%"></div>
+    </div>
+    <div class="phase-markers">
+      <div class="phase-marker">Phase 1<br>₹50–99</div>
+      <div class="phase-marker">Phase 2<br>₹100–149</div>
+      <div class="phase-marker">Phase 3<br>₹150–199</div>
+      <div class="phase-marker">Phase 4<br>₹200–300</div>
+    </div>
+  </div>
+
+  <div class="phase-nav" id="phaseNav">
+    <button class="phase-tab active" data-phase="all">All days</button>
+    <button class="phase-tab" data-phase="0">Phase 1 — Warm up</button>
+    <button class="phase-tab" data-phase="1">Phase 2 — Build up</button>
+    <button class="phase-tab" data-phase="2">Phase 3 — Steady climb</button>
+    <button class="phase-tab" data-phase="3">Phase 4 — Strong finish</button>
+  </div>
+
+  <div class="day-list-wrap">
+    <div class="day-list-header">
+      <span class="day-list-title">Tap a day to mark it saved · tap again to undo</span>
+      <span id="listBadge" class="badge badge-green"><span class="badge-dot"></span> On track</span>
+    </div>
+    <div class="day-list-scroll" id="dayListScroll">
+      <div id="dayList"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-tip">Your data is saved in this browser. Open this file again and your progress will be here.</div>
+    <button class="reset-btn" onclick="resetAll()">Reset progress</button>
+  </div>
+
+</div>
+
+<script>
+const GOAL = 30000;
+const START = new Date(2026, 5, 3);
+const PHASES = [
+  { label: 'Phase 1 — Warm up', shortLabel: 'Phase 1', days: 30, startAmt: 50, endAmt: 99 },
+  { label: 'Phase 2 — Build up', shortLabel: 'Phase 2', days: 50, startAmt: 100, endAmt: 149 },
+  { label: 'Phase 3 — Steady climb', shortLabel: 'Phase 3', days: 60, startAmt: 150, endAmt: 199 },
+  { label: 'Phase 4 — Strong finish', shortLabel: 'Phase 4', days: 60, startAmt: 200, endAmt: 300 },
+];
+
+function buildSchedule() {
+  const raw = [];
+  PHASES.forEach((ph, pi) => {
+    for (let i = 0; i < ph.days; i++) {
+      const t = ph.days === 1 ? 0 : i / (ph.days - 1);
+      raw.push({ phaseIdx: pi, amt: ph.startAmt + t * (ph.endAmt - ph.startAmt) });
+    }
+  });
+  const totalRaw = raw.reduce((s, r) => s + r.amt, 0);
+  const scale = GOAL / totalRaw;
+  let cumulative = 0;
+  return raw.map((r, i) => {
+    const d = new Date(START); d.setDate(d.getDate() + i);
+    const scaled = i === raw.length - 1 ? GOAL - cumulative : Math.round(r.amt * scale);
+    cumulative += scaled;
+    return {
+      index: i,
+      phaseIdx: r.phaseIdx,
+      date: d,
+      key: d.toISOString().slice(0, 10),
+      amount: scaled,
+      cumulative,
+      label: d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }),
+    };
+  });
+}
+
+const schedule = buildSchedule();
+let saved = {};
+let activePhase = 'all';
+
+try { saved = JSON.parse(localStorage.getItem('ps30k_v2') || '{}'); } catch(e) {}
+function persist() { try { localStorage.setItem('ps30k_v2', JSON.stringify(saved)); } catch(e) {} }
+
+function totalSaved() { return schedule.filter(d => saved[d.key]).reduce((s, d) => s + d.amount, 0); }
+
+function calcStreak() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  let streak = 0;
+  for (let i = schedule.length - 1; i >= 0; i--) {
+    if (schedule[i].date > today) continue;
+    if (saved[schedule[i].key]) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+function update() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const totalS = totalSaved();
+  const remain = Math.max(0, GOAL - totalS);
+  const daysLeft = schedule.filter(d => d.date >= today).length;
+  const pct = Math.min(100, Math.round((totalS / GOAL) * 100));
+  const streak = calcStreak();
+  const loggedCount = Object.keys(saved).length;
+  const todayEntry = schedule.find(d => d.date.getTime() === today.getTime());
+  const missedPast = schedule.filter(d => d.date < today && !saved[d.key]).length;
+
+  document.getElementById('mSaved').textContent = fmt(totalS);
+  document.getElementById('mSavedSub').textContent = loggedCount + ' days logged';
+  document.getElementById('mRemain').textContent = fmt(remain);
+  document.getElementById('mRemainSub').textContent = daysLeft + ' days left';
+  document.getElementById('mStreak').textContent = streak;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = fmt(totalS) + ' / ₹30,000';
+
+  if (todayEntry) {
+    document.getElementById('mToday').textContent = fmt(todayEntry.amount);
+    document.getElementById('mTodaySub').textContent = 'Phase ' + (todayEntry.phaseIdx + 1) + ' · Day ' + (todayEntry.index + 1);
+  }
+
+  const statusClass = pct >= 100 ? 'badge-green' : missedPast === 0 ? 'badge-green' : missedPast <= 3 ? 'badge-amber' : 'badge-red';
+  const statusText = pct >= 100 ? 'Goal reached!' : missedPast === 0 ? 'On track' : missedPast + ' day' + (missedPast > 1 ? 's' : '') + ' missed';
+  [document.getElementById('headerBadge'), document.getElementById('listBadge')].forEach(el => {
+    el.className = 'badge ' + statusClass;
+    el.innerHTML = '<span class="badge-dot"></span> ' + statusText;
+  });
+
+  renderList(today);
+}
+
+function renderList(today) {
+  const list = document.getElementById('dayList');
+  list.innerHTML = '';
+  let lastPhase = -1;
+  let todayEl = null;
+
+  const days = activePhase === 'all' ? schedule : schedule.filter(d => d.phaseIdx === parseInt(activePhase));
+
+  days.forEach(day => {
+    if (day.phaseIdx !== lastPhase) {
+      const ph = PHASES[day.phaseIdx];
+      const hdr = document.createElement('div');
+      hdr.className = 'phase-section-header';
+      hdr.innerHTML = ph.label + ' <span>₹' + ph.startAmt + '–' + ph.endAmt + '/day</span>';
+      list.appendChild(hdr);
+      lastPhase = day.phaseIdx;
+    }
+
+    const isToday = day.date.getTime() === today.getTime();
+    const isPast = day.date < today;
+    const isFuture = day.date > today;
+    const isSaved = !!saved[day.key];
+
+    const row = document.createElement('div');
+    row.className = 'day-row' + (isSaved ? ' is-saved' : '') + (isToday ? ' is-today' : '') + (isFuture ? ' is-future' : '');
+
+    row.innerHTML = `
+      <div class="day-check">${isSaved ? '✓' : ''}</div>
+      <div class="day-info">
+        <div class="day-date">${day.label}</div>
+        <div class="day-num-label">Day ${day.index + 1}</div>
+      </div>
+      <div class="day-cumulative">${fmt(day.cumulative)}</div>
+      <div class="day-amount">${fmt(day.amount)}</div>
+    `;
+
+    if (!isFuture) {
+      const k = day.key;
+      row.addEventListener('click', () => {
+        saved[k] ? delete saved[k] : (saved[k] = true);
+        persist();
+        update();
+      });
+    }
+
+    list.appendChild(row);
+    if (isToday) todayEl = row;
+  });
+
+  if (todayEl) setTimeout(() => todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
+}
+
+document.getElementById('phaseNav').addEventListener('click', e => {
+  const btn = e.target.closest('.phase-tab');
+  if (!btn) return;
+  activePhase = btn.dataset.phase;
+  document.querySelectorAll('.phase-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  update();
+});
+
+function resetAll() {
+  if (confirm('Reset all your saved progress? This cannot be undone.')) {
+    saved = {};
+    persist();
+    update();
+  }
+}
+
+update();
+</script>
+</body>
+</html>
